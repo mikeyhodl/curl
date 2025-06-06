@@ -1,5 +1,5 @@
 /***************************************************************************
-*                                  _   _ ____  _
+ *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
  *                             / __| | | | |_) | |
  *                            | (__| |_| |  _ <| |___
@@ -21,48 +21,64 @@
  * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
+#include <stdio.h>
 
-#include "test.h"
-#include "testtrace.h"
-#include "memdebug.h"
+#include <curl/curl.h>
 
-#ifndef CURL_DISABLE_WEBSOCKETS
+/* <DESC>
+ * Delete a single file from an FTP server.
+ * </DESC>
+ */
 
-static size_t writecb(char *b, size_t size, size_t nitems, void *p)
+static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 {
-  (void)b;
-  (void)size;
-  (void)nitems;
-  (void)p;
-  return 0;
+  (void)buffer;
+  (void)stream;
+  return size * nmemb;
 }
 
-CURLcode test(char *URL)
+
+int main(void)
 {
   CURL *curl;
-  CURLcode res = CURLE_OK;
+  CURLcode res;
+  struct curl_slist *headerlist = NULL;
 
-  global_init(CURL_GLOBAL_ALL);
+  curl_global_init(CURL_GLOBAL_DEFAULT);
 
   curl = curl_easy_init();
   if(curl) {
-    curl_easy_setopt(curl, CURLOPT_URL, URL);
+    /*
+     * You better replace the URL with one that works!
+     */
+    curl_easy_setopt(curl, CURLOPT_URL, "ftp://ftp.example.com/");
+    /* Define our callback to get called when there is data to be written */
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, my_fwrite);
 
-    /* use the callback style */
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "webbie-sox/3");
+    /* Switch on full protocol/debug output */
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writecb);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, curl);
+
+    /* build a list of commands to pass to libcurl */
+    headerlist = curl_slist_append(headerlist, "DELE file-to-remove");
+
+    /* pass in list of FTP commands to run after the transfer */
+    curl_easy_setopt(curl, CURLOPT_POSTQUOTE, headerlist);
+
     res = curl_easy_perform(curl);
-    curl_mprintf("Returned %d, should be %d.\n", res, CURLE_RECV_ERROR);
 
     /* always cleanup */
     curl_easy_cleanup(curl);
-  }
-  curl_global_cleanup();
-  return CURLE_OK;
-}
 
-#else
-NO_SUPPORT_BUILT_IN
-#endif
+    /* clean up the FTP commands list */
+    curl_slist_free_all(headerlist);
+
+    if(CURLE_OK != res) {
+      /* we failed */
+      fprintf(stderr, "curl told us %d\n", res);
+    }
+  }
+
+  curl_global_cleanup();
+
+  return 0;
+}
