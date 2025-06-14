@@ -24,17 +24,16 @@
 
 #include "../curl_setup.h"
 
-#if defined(USE_GNUTLS) || defined(USE_WOLFSSL) ||      \
-  defined(USE_SCHANNEL) || defined(USE_SECTRANSP) ||    \
+#if defined(USE_GNUTLS) || defined(USE_WOLFSSL) || defined(USE_SCHANNEL) || \
   defined(USE_MBEDTLS) || defined(USE_RUSTLS)
 
-#if defined(USE_GNUTLS) || defined(USE_SCHANNEL) || defined(USE_SECTRANSP) || \
-  defined(USE_MBEDTLS) || defined(USE_WOLFSSL) || defined(USE_RUSTLS)
+#if defined(USE_GNUTLS) || defined(USE_SCHANNEL) || defined(USE_MBEDTLS) || \
+  defined(USE_WOLFSSL) || defined(USE_RUSTLS)
 #define WANT_PARSEX509 /* uses Curl_parseX509() */
 #endif
 
-#if defined(USE_GNUTLS) || defined(USE_SCHANNEL) || defined(USE_SECTRANSP) || \
-  defined(USE_MBEDTLS) || defined(USE_RUSTLS)
+#if defined(USE_GNUTLS) || defined(USE_SCHANNEL) || defined(USE_MBEDTLS) || \
+  defined(USE_RUSTLS)
 #define WANT_EXTRACT_CERTINFO /* uses Curl_extract_certinfo() */
 #endif
 
@@ -256,7 +255,7 @@ static const char *getASN1Element(struct Curl_asn1Element *elem,
 #ifdef WANT_EXTRACT_CERTINFO
 
 /*
- * Search the null terminated OID or OID identifier in local table.
+ * Search the null-terminated OID or OID identifier in local table.
  * Return the table entry pointer or NULL if not found.
  */
 static const struct Curl_OID *searchOID(const char *oid)
@@ -1277,5 +1276,5 @@ done:
 
 #endif /* WANT_EXTRACT_CERTINFO */
 
-#endif /* USE_GNUTLS or USE_WOLFSSL or USE_SCHANNEL or USE_SECTRANSP
-          or USE_MBEDTLS or USE_RUSTLS */
+#endif /* USE_GNUTLS or USE_WOLFSSL or USE_SCHANNEL or USE_MBEDTLS or
+          USE_RUSTLS */

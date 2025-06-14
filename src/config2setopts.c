@@ -361,9 +361,6 @@ static CURLcode ssl_setopts(struct GlobalConfig *global,
   if(config->doh_verifystatus)
     my_setopt_long(curl, CURLOPT_DOH_SSL_VERIFYSTATUS, 1);
 
-  if(config->falsestart)
-    my_setopt_long(curl, CURLOPT_SSL_FALSESTART, 1);
-
   my_setopt_SSLVERSION(curl, CURLOPT_SSLVERSION,
                        config->ssl_version | config->ssl_version_max);
   if(config->proxy)
@@ -640,13 +637,24 @@ static CURLcode ftp_setopts(struct GlobalConfig *global,
   return CURLE_OK;
 }
 
+static void gen_trace_setopts(struct GlobalConfig *global,
+                              struct OperationConfig *config,
+                              CURL *curl)
+{
+  if(global->tracetype != TRACE_NONE) {
+    my_setopt(curl, CURLOPT_DEBUGFUNCTION, tool_debug_cb);
+    my_setopt(curl, CURLOPT_DEBUGDATA, config);
+    my_setopt_long(curl, CURLOPT_VERBOSE, 1L);
+  }
+}
+
 static void gen_cb_setopts(struct GlobalConfig *global,
                            struct OperationConfig *config,
                            struct per_transfer *per,
                            CURL *curl)
 {
   (void) global; /* for builds without --libcurl */
-
+  (void) config;
   /* where to store */
   my_setopt(curl, CURLOPT_WRITEDATA, per);
   my_setopt(curl, CURLOPT_INTERLEAVEDATA, per);
@@ -676,12 +684,6 @@ static void gen_cb_setopts(struct GlobalConfig *global,
     my_setopt_long(curl, CURLOPT_NOPROGRESS, 0);
     my_setopt(curl, CURLOPT_XFERINFOFUNCTION, tool_readbusy_cb);
     my_setopt(curl, CURLOPT_XFERINFODATA, per);
-  }
-
-  if(global->tracetype != TRACE_NONE) {
-    my_setopt(curl, CURLOPT_DEBUGFUNCTION, tool_debug_cb);
-    my_setopt(curl, CURLOPT_DEBUGDATA, config);
-    my_setopt_long(curl, CURLOPT_VERBOSE, 1L);
   }
 
   my_setopt(curl, CURLOPT_HEADERFUNCTION, tool_header_cb);
@@ -799,7 +801,7 @@ CURLcode config2setopts(struct GlobalConfig *global,
     return result;
 #endif
 
-  gen_cb_setopts(global, config, per, curl);
+  gen_trace_setopts(global, config, curl);
 
   {
 #ifdef DEBUGBUILD
@@ -822,6 +824,9 @@ CURLcode config2setopts(struct GlobalConfig *global,
   my_setopt_str(curl, CURLOPT_URL, per->url);
   my_setopt_long(curl, CURLOPT_NOPROGRESS,
                  global->noprogress || global->silent);
+  /* call after the line above. It may override CURLOPT_NOPROGRESS */
+  gen_cb_setopts(global, config, per, curl);
+
   if(config->no_body)
     my_setopt_long(curl, CURLOPT_NOBODY, 1);
 
@@ -929,7 +934,7 @@ CURLcode config2setopts(struct GlobalConfig *global,
   if(config->use_resume)
     my_setopt_offt(curl, CURLOPT_RESUME_FROM_LARGE, config->resume_from);
   else
-    my_setopt_offt(curl, CURLOPT_RESUME_FROM_LARGE, CURL_OFF_T_C(0));
+    my_setopt_offt(curl, CURLOPT_RESUME_FROM_LARGE, 0);
 
   my_setopt_str(curl, CURLOPT_KEYPASSWD, config->key_passwd);
   my_setopt_str(curl, CURLOPT_PROXY_KEYPASSWD, config->proxy_key_passwd);

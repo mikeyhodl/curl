@@ -51,8 +51,8 @@ backend at first use. If no selection is done by the program using libcurl,
 this variable's selection is used. Setting a name that is not a built-in
 alternative makes libcurl stay with the default.
 
-SSL backend names (case-insensitive): BearSSL, GnuTLS, mbedTLS, OpenSSL,
-Rustls, Schannel, Secure-Transport, wolfSSL
+SSL backend names (case-insensitive): GnuTLS, mbedTLS, OpenSSL, Rustls,
+Schannel, wolfSSL
 
 ## `HOME`
 
@@ -83,7 +83,7 @@ Username to use when invoking the *ntlm-wb* tool.
 
 ## `SSLKEYLOGFILE`
 
-When set and libcurl runs with a SSL backend that supports this feature,
+When set and libcurl runs with an SSL backend that supports this feature,
 libcurl saves SSL secrets into the given filename. Using those SSL secrets,
 other tools (such as Wireshark) can decrypt the SSL communication and
 analyze/view the traffic.

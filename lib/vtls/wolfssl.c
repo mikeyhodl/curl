@@ -299,9 +299,11 @@ static long wssl_bio_cf_ctrl(WOLFSSL_BIO *bio, int cmd, long num, void *ptr)
     ret = 1;
     break;
 #ifdef WOLFSSL_BIO_CTRL_EOF
-  case WOLFSSL_BIO_CTRL_EOF:
+  case WOLFSSL_BIO_CTRL_EOF: {
     /* EOF has been reached on input? */
-    return !cf->next || !cf->next->connected;
+    struct ssl_connect_data *connssl = cf->ctx;
+    return connssl->peer_closed;
+  }
 #endif
   default:
     ret = 0;
@@ -317,7 +319,7 @@ static int wssl_bio_cf_out_write(WOLFSSL_BIO *bio,
   struct ssl_connect_data *connssl = cf->ctx;
   struct wssl_ctx *wssl = (struct wssl_ctx *)connssl->backend;
   struct Curl_easy *data = CF_DATA_CURRENT(cf);
-  ssize_t nwritten, skiplen = 0;
+  size_t nwritten, skiplen = 0;
   CURLcode result = CURLE_OK;
 
   DEBUGASSERT(data);
@@ -331,21 +333,21 @@ static int wssl_bio_cf_out_write(WOLFSSL_BIO *bio,
     skiplen = (ssize_t)(blen - wssl->io_send_blocked_len);
     blen = wssl->io_send_blocked_len;
   }
-  nwritten = Curl_conn_cf_send(cf->next, data, buf, blen, FALSE, &result);
+  result = Curl_conn_cf_send(cf->next, data, buf, blen, FALSE, &nwritten);
   wssl->io_result = result;
-  CURL_TRC_CF(data, cf, "bio_write(len=%d) -> %zd, %d",
-              blen, nwritten, result);
+  CURL_TRC_CF(data, cf, "bio_write(len=%d) -> %d, %zu",
+              blen, result, nwritten);
 #ifdef USE_FULL_BIO
   wolfSSL_BIO_clear_retry_flags(bio);
 #endif
-  if(nwritten < 0 && CURLE_AGAIN == result) {
+  if(CURLE_AGAIN == result) {
     wolfSSL_BIO_set_retry_write(bio);
     if(wssl->shutting_down && !wssl->io_send_blocked_len)
       wssl->io_send_blocked_len = blen;
   }
   else if(!result && skiplen)
     nwritten += skiplen;
-  return (int)nwritten;
+  return result ? -1 : (int)nwritten;
 }
 
 static int wssl_bio_cf_in_read(WOLFSSL_BIO *bio, char *buf, int blen)
@@ -354,7 +356,7 @@ static int wssl_bio_cf_in_read(WOLFSSL_BIO *bio, char *buf, int blen)
   struct ssl_connect_data *connssl = cf->ctx;
   struct wssl_ctx *wssl = (struct wssl_ctx *)connssl->backend;
   struct Curl_easy *data = CF_DATA_CURRENT(cf);
-  ssize_t nread;
+  size_t nread;
   CURLcode result = CURLE_OK;
 
   DEBUGASSERT(data);
@@ -374,17 +376,17 @@ static int wssl_bio_cf_in_read(WOLFSSL_BIO *bio, char *buf, int blen)
     }
   }
 
-  nread = Curl_conn_cf_recv(cf->next, data, buf, blen, &result);
+  result = Curl_conn_cf_recv(cf->next, data, buf, blen, &nread);
   wssl->io_result = result;
-  CURL_TRC_CF(data, cf, "bio_read(len=%d) -> %zd, %d", blen, nread, result);
+  CURL_TRC_CF(data, cf, "bio_read(len=%d) -> %d, %zu", blen, result, nread);
 #ifdef USE_FULL_BIO
   wolfSSL_BIO_clear_retry_flags(bio);
 #endif
-  if(nread < 0 && CURLE_AGAIN == result)
+  if(CURLE_AGAIN == result)
     wolfSSL_BIO_set_retry_read(bio);
   else if(nread == 0)
     connssl->peer_closed = TRUE;
-  return (int)nread;
+  return result ? -1 : (int)nread;
 }
 
 static WOLFSSL_BIO_METHOD *wssl_bio_cf_method = NULL;
@@ -509,7 +511,7 @@ static CURLcode wssl_on_session_reuse(struct Curl_cfilter *cf,
   *do_early_data = FALSE;
 #ifdef WOLFSSL_EARLY_DATA
   connssl->earlydata_max = wolfSSL_SESSION_get_max_early_data(
-                            wolfSSL_get_session(wssl->ssl));
+    wolfSSL_get_session(wssl->ssl));
 #else
   (void)wssl;
   connssl->earlydata_max = 0;
@@ -574,11 +576,19 @@ wssl_setup_session(struct Curl_cfilter *cf,
             if(result)
               goto  out;
           }
+#ifdef WOLFSSL_EARLY_DATA
           if(do_early_data) {
+            unsigned int edmax = (scs->earlydata_max < UINT_MAX) ?
+              (unsigned int)scs->earlydata_max : UINT_MAX;
             /* We only try the ALPN protocol the session used before,
              * otherwise we might send early data for the wrong protocol */
             Curl_alpn_restrict_to(alpns, scs->alpn);
+            wolfSSL_set_max_early_data(wss->ssl, edmax);
           }
+#else
+          /* Should never enable when not supported */
+          DEBUGASSERT(!do_early_data);
+#endif
         }
       }
       wolfSSL_SESSION_free(session);
@@ -930,14 +940,6 @@ wssl_legacy_CTX_set_max_proto_version(WOLFSSL_CTX* ctx, int version)
   "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_"               \
   "POLY1305_SHA256:TLS_AES_128_CCM_SHA256"
 #define QUIC_GROUPS "P-256:P-384:P-521"
-
-#if defined(HAVE_SECRET_CALLBACK)
-static void keylog_callback(const WOLFSSL *ssl, const char *line)
-{
-  (void)ssl;
-  Curl_tls_keylog_write_line(line);
-}
-#endif
 
 CURLcode Curl_wssl_ctx_init(struct wssl_ctx *wctx,
                             struct Curl_cfilter *cf,
@@ -2025,8 +2027,7 @@ static ssize_t wssl_recv(struct Curl_cfilter *cf,
       }
       else if(!wssl->io_result && connssl->peer_closed) {
         CURL_TRC_CF(data, cf, "wssl_recv(len=%zu) -> CLOSED", blen);
-        *curlcode = CURLE_OK;
-        return 0;
+        failf(data, "Connection closed abruptly");
       }
       else {
         char error_buffer[256];
@@ -2284,7 +2285,6 @@ const struct Curl_ssl Curl_ssl_wolfssl = {
   NULL,                            /* set_engine */
   NULL,                            /* set_engine_default */
   NULL,                            /* engines_list */
-  NULL,                            /* false_start */
   wssl_sha256sum,                  /* sha256sum */
   wssl_recv,                       /* recv decrypted data */
   wssl_send,                       /* send data to encrypt */

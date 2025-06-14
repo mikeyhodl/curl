@@ -29,7 +29,7 @@ set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS "${CURL_DEBUG_MACROS}
 
 configure_file("curl_config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/curl_config.h")
 
-# Get 'CSOURCES', 'HHEADERS' variables
+# Get CSOURCES, HHEADERS variables
 curl_transform_makefile_inc("Makefile.inc" "${CMAKE_CURRENT_BINARY_DIR}/Makefile.inc.cmake")
 include("${CMAKE_CURRENT_BINARY_DIR}/Makefile.inc.cmake")
 
@@ -179,15 +179,8 @@ if(BUILD_SHARED_LIBS)
   list(APPEND libcurl_export ${LIB_SHARED})
   add_library(${LIB_SHARED} SHARED ${LIB_SOURCE})
   add_library(${PROJECT_NAME}::${LIB_SHARED} ALIAS ${LIB_SHARED})
-  if(WIN32 OR CYGWIN)
-    if(CYGWIN)
-      # For Cygwin always compile dllmain.c as a separate unit since it
-      # includes windows.h, which should not be included in other units.
-      set_source_files_properties("dllmain.c" PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
-    endif()
-    set_property(TARGET ${LIB_SHARED} APPEND PROPERTY SOURCES "dllmain.c")
-  endif()
   if(WIN32)
+    set_property(TARGET ${LIB_SHARED} APPEND PROPERTY SOURCES "dllmain.c")
     set_property(TARGET ${LIB_SHARED} APPEND PROPERTY SOURCES "libcurl.rc")
     if(CURL_HIDES_PRIVATE_SYMBOLS)
       set_property(TARGET ${LIB_SHARED} APPEND PROPERTY SOURCES "${PROJECT_SOURCE_DIR}/lib/libcurl.def")
@@ -238,7 +231,7 @@ if(BUILD_SHARED_LIBS)
   option(CURL_LIBCURL_VERSIONED_SYMBOLS "Enable libcurl versioned symbols" OFF)
 
   if(CURL_LIBCURL_SOVERSION OR CURL_LIBCURL_VERSIONED_SYMBOLS)
-    # Get 'VERSIONCHANGE', 'VERSIONADD', 'VERSIONDEL', 'VERSIONINFO' variables
+    # Get VERSIONCHANGE, VERSIONADD, VERSIONDEL, VERSIONINFO variables
     curl_transform_makefile_inc("Makefile.soname" "${CMAKE_CURRENT_BINARY_DIR}/Makefile.soname.cmake")
     include("${CMAKE_CURRENT_BINARY_DIR}/Makefile.soname.cmake")
 
@@ -262,8 +255,6 @@ if(BUILD_SHARED_LIBS)
         set(CURL_LIBCURL_VERSIONED_SYMBOLS_PREFIX "OPENSSL_")
       elseif(CURL_USE_MBEDTLS)
         set(CURL_LIBCURL_VERSIONED_SYMBOLS_PREFIX "MBEDTLS_")
-      elseif(CURL_USE_BEARSSL)
-        set(CURL_LIBCURL_VERSIONED_SYMBOLS_PREFIX "BEARSSL_")
       elseif(CURL_USE_WOLFSSL)
         set(CURL_LIBCURL_VERSIONED_SYMBOLS_PREFIX "WOLFSSL_")
       elseif(CURL_USE_GNUTLS)

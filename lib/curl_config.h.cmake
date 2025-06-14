@@ -327,10 +327,10 @@
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #cmakedefine HAVE_IFADDRS_H 1
 
-/* Define to 1 if you have a IPv6 capable working inet_ntop function. */
+/* Define to 1 if you have an IPv6 capable working inet_ntop function. */
 #cmakedefine HAVE_INET_NTOP 1
 
-/* Define to 1 if you have a IPv6 capable working inet_pton function. */
+/* Define to 1 if you have an IPv6 capable working inet_pton function. */
 #cmakedefine HAVE_INET_PTON 1
 
 /* Define to 1 if symbol `sa_family_t' exists */
@@ -685,17 +685,11 @@ ${SIZEOF_TIME_T_CODE}
 /* if GnuTLS is enabled */
 #cmakedefine USE_GNUTLS 1
 
-/* if Secure Transport is enabled */
-#cmakedefine USE_SECTRANSP 1
-
 /* if SSL session export support is available */
 #cmakedefine USE_SSLS_EXPORT 1
 
 /* if mbedTLS is enabled */
 #cmakedefine USE_MBEDTLS 1
-
-/* if BearSSL is enabled */
-#cmakedefine USE_BEARSSL 1
 
 /* if Rustls is enabled */
 #cmakedefine USE_RUSTLS 1
@@ -799,18 +793,6 @@ ${SIZEOF_TIME_T_CODE}
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #cmakedefine _FILE_OFFSET_BITS ${_FILE_OFFSET_BITS}
-
-/* Define for large files, on AIX-style hosts. */
-#cmakedefine _LARGE_FILES ${_LARGE_FILES}
-
-/* define this if you need it to compile thread-safe code */
-#cmakedefine _THREAD_SAFE ${_THREAD_SAFE}
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#cmakedefine const ${const}
-
-/* Define to `unsigned int' if <sys/types.h> does not define. */
-#cmakedefine size_t ${size_t}
 
 /* the signed version of size_t */
 #cmakedefine ssize_t ${ssize_t}

@@ -218,7 +218,7 @@ struct OperationConfig {
   long retry_delay;         /* delay between retries (in seconds) */
   long retry_maxtime;       /* maximum time to keep retrying */
 
-  long mime_options;        /* Mime option flags. */
+  unsigned long mime_options; /* Mime option flags. */
   long tftp_blksize;        /* TFTP BLKSIZE option */
   long alivetime;           /* keepalive-time */
   long alivecnt;            /* keepalive-cnt */
@@ -330,7 +330,6 @@ struct OperationConfig {
   BIT(proxy_ssl_auto_client_cert); /* proxy version of ssl_auto_client_cert */
   BIT(noalpn);                    /* enable/disable TLS ALPN extension */
   BIT(abstract_unix_socket);      /* path to an abstract Unix domain socket */
-  BIT(falsestart);
   BIT(path_as_is);
   BIT(suppress_connect_headers);  /* suppress proxy CONNECT response headers
                                      from user callbacks */
