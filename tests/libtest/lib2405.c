@@ -29,7 +29,7 @@
  *  HTTP1 amd HTTP2 (no multiplexing) two transfers (expected two descriptors),
  *  HTTP2 with multiplexing (expected one descriptors)
  *  Improper inputs to the API result in CURLM_BAD_FUNCTION_ARGUMENT.
- *  Sending a empty ufds, and size = 0 will return the number of fds needed.
+ *  Sending an empty ufds, and size = 0 will return the number of fds needed.
  *  Sending a non-empty ufds, but smaller than the fds needed will result in a
  *    CURLM_OUT_OF_MEMORY, and a number of fds that is >= to the number needed.
  *
@@ -43,8 +43,7 @@
 #include "warnless.h"
 #include "memdebug.h"
 
-
- /* ---------------------------------------------------------------- */
+/* ---------------------------------------------------------------- */
 
 #define test_check(expected_fds) \
   if(res != CURLE_OK) { \
@@ -63,7 +62,7 @@
   test_check(expected_fds); \
 } while(0)
 
- /* ---------------------------------------------------------------- */
+/* ---------------------------------------------------------------- */
 
 enum {
   TEST_USE_HTTP1 = 0,
@@ -370,7 +369,7 @@ test_cleanup:
   return res;
 }
 
-CURLcode test(char *URL)
+static CURLcode test_lib2405(char *URL)
 {
   CURLcode res = CURLE_OK;
   unsigned int fd_count = 0;

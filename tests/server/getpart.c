@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
-#include "server_setup.h"
+#include "curl_setup.h"
 
 #include "getpart.h"
 #include <curlx.h> /* from the private lib dir */
@@ -63,7 +63,6 @@ curl_wcsdup_callback Curl_cwcsdup = NULL; /* not use in test code */
 #if defined(_MSC_VER) && defined(_DLL)
 #  pragma warning(pop)
 #endif
-
 
 /*
  * line_length()
@@ -109,7 +108,6 @@ static size_t line_length(const char *buffer, int bytestocheck)
  *   GPE_END_OF_FILE
  *   GPE_OK
  */
-
 static int readline(char **buffer, size_t *bufsize, size_t *length,
                     FILE *stream)
 {
@@ -163,7 +161,7 @@ static int readline(char **buffer, size_t *bufsize, size_t *length,
  *
  * If the source buffer is indicated to be base64 encoded, this appends the
  * decoded data, binary or whatever, to the destination. The source buffer
- * may not hold binary data, only a null terminated string is valid content.
+ * may not hold binary data, only a null-terminated string is valid content.
  *
  * Destination buffer will be enlarged and relocated as needed.
  *
@@ -174,7 +172,6 @@ static int readline(char **buffer, size_t *bufsize, size_t *length,
  *   GPE_OUT_OF_MEMORY
  *   GPE_OK
  */
-
 static int appenddata(char  **dst_buf,   /* dest buffer */
                       size_t *dst_len,   /* dest buffer data length */
                       size_t *dst_alloc, /* dest buffer allocated size */
@@ -264,7 +261,7 @@ static int decodedata(char  **buf,   /* dest buffer */
  * and the size of the data is stored at the addresses that caller specifies.
  *
  * If the returned data is a string the returned size will be the length of
- * the string excluding null termination. Otherwise it will just be the size
+ * the string excluding null-termination. Otherwise it will just be the size
  * of the returned binary data.
  *
  * Calling function is responsible to free returned buffer.
@@ -274,7 +271,6 @@ static int decodedata(char  **buf,   /* dest buffer */
  *   GPE_OUT_OF_MEMORY
  *   GPE_OK
  */
-
 int getpart(char **outbuf, size_t *outlen,
             const char *main, const char *sub, FILE *stream)
 {
