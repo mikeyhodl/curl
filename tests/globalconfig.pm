@@ -61,6 +61,7 @@ BEGIN {
         $run_duphandle
         $run_event_based
         $SERVERCMD
+        $DNSCMD
         $SERVERIN
         $srcdir
         $TESTDIR
@@ -71,7 +72,6 @@ BEGIN {
         %feature
         %keywords
         @protocols
-        $bundle
         $dev_null
     );
 }
@@ -135,12 +135,12 @@ our $SERVERIN="server.input";   # what curl sent the server
 our $PROXYIN="proxy.input";     # what curl sent the proxy
 our $MEMDUMP="memdump";         # file that the memory debugging creates
 our $SERVERCMD="server.cmd";    # copy server instructions here
+our $DNSCMD="dnsd.cmd";         # write DNS instructions here
 
 # other config variables
 our @protocols;   # array of lowercase supported protocol servers
 our %feature;     # hash of enabled features
 our %keywords;    # hash of keywords from the test spec
 our $has_shared;  # built as a shared library
-our $bundle = 0;  # use bundled server, libtest, unit binaries
 
 1;

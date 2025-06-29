@@ -1032,7 +1032,7 @@ static CURLcode imap_state_capability_resp(struct Curl_easy *data,
 
   (void)instate; /* no use for this yet */
 
-  /* Do we have a untagged response? */
+  /* Do we have an untagged response? */
   if(imapcode == '*') {
     line += 2;
 
@@ -1347,9 +1347,6 @@ static CURLcode imap_state_fetch_resp(struct Curl_easy *data,
     else {
       /* IMAP download */
       data->req.maxdownload = size;
-      /* force a recv/send check of this connection, as the data might've been
-       read off the socket already */
-      data->state.select_bits = CURL_CSELECT_IN;
       Curl_xfer_setup1(data, CURL_XFER_RECV, size, FALSE);
     }
   }
@@ -1780,18 +1777,14 @@ static CURLcode imap_disconnect(struct Curl_easy *data,
   (void)data;
   if(imapc) {
     /* We cannot send quit unconditionally. If this connection is stale or
-       bad in any way, sending quit and waiting around here will make the
+       bad in any way (pingpong has pending data to send),
+       sending quit and waiting around here will make the
        disconnect wait in vain and cause more problems than we need to. */
-
-    /* The IMAP session may or may not have been allocated/setup at this
-       point! */
-    if(!dead_connection && conn->bits.protoconnstart) {
+    if(!dead_connection && conn->bits.protoconnstart &&
+       !Curl_pp_needs_flush(data, &imapc->pp)) {
       if(!imap_perform_logout(data, imapc))
         (void)imap_block_statemach(data, imapc, TRUE); /* ignore errors */
     }
-
-    /* Cleanup the SASL module */
-    Curl_sasl_cleanup(conn, imapc->sasl.authused);
   }
   return CURLE_OK;
 }

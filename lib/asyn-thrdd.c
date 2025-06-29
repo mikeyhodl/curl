@@ -61,7 +61,6 @@
 #include "share.h"
 #include "url.h"
 #include "multiif.h"
-#include "inet_ntop.h"
 #include "curl_threads.h"
 #include "strdup.h"
 
@@ -423,6 +422,7 @@ static bool async_thrdd_init(struct Curl_easy *data,
   data->state.async.done = FALSE;
   data->state.async.port = port;
   data->state.async.ip_version = ip_version;
+  free(data->state.async.hostname);
   data->state.async.hostname = strdup(hostname);
   if(!data->state.async.hostname)
     goto err_exit;
@@ -595,16 +595,15 @@ CURLcode Curl_async_is_resolved(struct Curl_easy *data,
         if(!result) {
           struct Curl_https_rrinfo *lhrr;
           lhrr = Curl_httpsrr_dup_move(&thrdd->rr.hinfo);
-          if(!lhrr) {
-            async_thrdd_destroy(data);
-            return CURLE_OUT_OF_MEMORY;
-          }
-          data->state.async.dns->hinfo = lhrr;
+          if(!lhrr)
+            result = CURLE_OUT_OF_MEMORY;
+          else
+            data->state.async.dns->hinfo = lhrr;
         }
       }
 #endif
-     if(!result && data->state.async.dns)
-       result = Curl_dnscache_add(data, data->state.async.dns);
+      if(!result && data->state.async.dns)
+        result = Curl_dnscache_add(data, data->state.async.dns);
     }
 
     if(!result && !data->state.async.dns)

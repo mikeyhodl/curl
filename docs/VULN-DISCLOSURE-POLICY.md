@@ -80,7 +80,7 @@ announcement.
   Bounty team and the reporter is asked to request the reward from them after
   the issue has been completely handled and published by curl.
 
-- No more than 10 days before release, inform
+- No more than seven days before release, inform
   [distros@openwall](https://oss-security.openwall.org/wiki/mailing-lists/distros)
   to prepare them about the upcoming public security vulnerability
   announcement - attach the advisory draft for information with CVE and
@@ -134,12 +134,15 @@ somewhat over time and a list somewhere only risks getting outdated.
 6. On security advisory release day, push the changes on the curl-www
    repository's remote master branch.
 
-## HackerOne
+## Disclose the report
 
 Request the issue to be disclosed. If there are sensitive details present in
 the report and discussion, those should be redacted from the disclosure. The
 default policy is to disclose as much as possible as soon as the vulnerability
 has been published.
+
+*All* reports submitted to the project, valid or not, should be disclosed and
+made public.
 
 ## Bug Bounty
 
@@ -252,6 +255,9 @@ already do much worse harm and the problem is not really in curl.
 Vulnerabilities in features which are off by default (in the build) and
 documented as experimental, or exist only in debug mode, are not eligible for a
 reward and we do not consider them security problems.
+
+The same applies to scripts and software which are not installed by default by
+the make install rule.
 
 ## URL inconsistencies
 

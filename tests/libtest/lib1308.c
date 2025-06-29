@@ -23,8 +23,6 @@
  ***************************************************************************/
 #include "curlcheck.h"
 
-#include <curl/curl.h>
-
 static size_t print_httppost_callback(void *arg, const char *buf, size_t len)
 {
   fwrite(buf, len, 1, stdout);
@@ -32,7 +30,7 @@ static size_t print_httppost_callback(void *arg, const char *buf, size_t len)
   return len;
 }
 
-CURLcode test(char *URL)
+static CURLcode test_lib1308(char *URL)
 {
   CURLFORMcode rc;
   int res;
@@ -42,7 +40,7 @@ CURLcode test(char *URL)
   char buffer[] = "test buffer";
 
   rc = curl_formadd(&post, &last, CURLFORM_COPYNAME, "name",
-                      CURLFORM_COPYCONTENTS, "content", CURLFORM_END);
+                    CURLFORM_COPYCONTENTS, "content", CURLFORM_END);
   fail_unless(rc == 0, "curl_formadd returned error");
 
   /* after the first curl_formadd when there's a single entry, both pointers

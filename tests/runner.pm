@@ -502,19 +502,6 @@ sub torture {
         unlink("$LOGDIR/$MEMDUMP");
 
         my $cmd = $testcmd;
-        if($valgrind && !$gdbthis) {
-            my @valgrindoption = getpart("verify", "valgrind");
-            if((!@valgrindoption) || ($valgrindoption[0] !~ /disable/)) {
-                my $valgrindcmd = shell_quote($valgrind) . " ";
-                $valgrindcmd .= "$valgrind_tool " if($valgrind_tool);
-                $valgrindcmd .= "--quiet --leak-check=yes ";
-                $valgrindcmd .= "--suppressions=$srcdir/valgrind.supp ";
-                # $valgrindcmd .= "--gen-suppressions=all ";
-                $valgrindcmd .= "--num-callers=16 ";
-                $valgrindcmd .= "${valgrind_logfile}=$LOGDIR/valgrind$testnum";
-                $cmd = "$valgrindcmd $testcmd";
-            }
-        }
         logmsg "*** Function number $limit is now set to fail ***\n" if($gdbthis);
 
         my $ret = 0;
@@ -763,11 +750,19 @@ sub singletest_prepare {
     unlink("$LOGDIR/$SERVERIN");
     unlink("$LOGDIR/$PROXYIN");
 
-    # if this section exists, it might be FTP server instructions:
-    my @ftpservercmd = getpart("reply", "servercmd");
-    push @ftpservercmd, "Testnum $testnum\n";
+    # if this section exists, it might be server instructions:
+    my @servercmd = getpart("reply", "servercmd");
+    push @servercmd, "Testnum $testnum\n";
     # write the instructions to file
-    writearray("$LOGDIR/$SERVERCMD", \@ftpservercmd);
+    writearray("$LOGDIR/$SERVERCMD", \@servercmd);
+
+    # if this section exists, it might be DNS instructions:
+    my @dnscmd = getpart("reply", "dns");
+    # write the instructions to file
+    writearray("$LOGDIR/$DNSCMD", \@dnscmd);
+
+    # provide an environment variable
+    $ENV{'CURL_TESTNUM'} = $testnum;
 
     # create (possibly-empty) files before starting the test
     for my $partsuffix (('', '1', '2', '3', '4')) {
@@ -919,21 +914,15 @@ sub singletest_run {
         }
 
         if($tool =~ /^lib/) {
-            if($bundle) {
-                $tool = "libtests" . exe_ext('TOOL');
-            }
+            $tool = "libtests" . exe_ext('TOOL');
             $CMDLINE=$LIBDIR . $tool;
         }
         elsif($tool =~ /^tool/) {
-            if($bundle) {
-                $tool = "tunits" . exe_ext('TOOL')
-            }
+            $tool = "tunits" . exe_ext('TOOL');
             $CMDLINE=$TUNITDIR . $tool;
         }
         elsif($tool =~ /^unit/) {
-            if($bundle) {
-                $tool = "units" . exe_ext('TOOL')
-            }
+            $tool = "units" . exe_ext('TOOL');
             $CMDLINE=$UNITDIR . $tool;
         }
 
@@ -944,13 +933,11 @@ sub singletest_run {
 
         $CMDLINE=exerunner() . $CMDLINE;
 
-        if($bundle) {
-            if($gdbthis) {
-                $cmdargs =" $tool_name$cmdargs";
-            }
-            else {
-                $CMDLINE.=" $tool_name";
-            }
+        if($gdbthis) {
+            $cmdargs =" $tool_name$cmdargs";
+        }
+        else {
+            $CMDLINE.=" $tool_name";
         }
 
         $DBGCURL=$CMDLINE;

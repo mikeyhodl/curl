@@ -24,7 +24,9 @@
  *
  ***************************************************************************/
 
+#ifndef CURL_NO_OLDIES
 #define CURL_NO_OLDIES
+#endif
 
 /*
  * curl_setup.h may define preprocessor macros such as _FILE_OFFSET_BITS and
@@ -45,7 +47,7 @@ extern FILE *tool_stderr;
 
 #include <curl/curl.h> /* external interface */
 
-#include "timeval.h"
+#include <curlx/curlx.h>
 
 /*
  * Platform specific stuff.
