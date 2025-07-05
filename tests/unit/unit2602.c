@@ -23,22 +23,15 @@
  ***************************************************************************/
 #include "curlcheck.h"
 
+#include <curlx/dynbuf.h>
+
 #include "urldata.h"
-#include "dynbuf.h"
 #include "dynhds.h"
 #include "curl_trc.h"
 
-static CURLcode unit_setup(void)
+static CURLcode test_unit2602(char *arg)
 {
-  return CURLE_OK;
-}
-
-static void unit_stop(void)
-{
-}
-
-
-UNITTEST_START
+  UNITTEST_BEGIN_SIMPLE
 
   struct dynhds hds;
   struct dynbuf dbuf;
@@ -145,4 +138,5 @@ UNITTEST_START
 
   Curl_dynhds_free(&hds);
 
-UNITTEST_STOP
+  UNITTEST_END_SIMPLE
+}

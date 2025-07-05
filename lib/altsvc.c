@@ -32,7 +32,6 @@
 #include "urldata.h"
 #include "altsvc.h"
 #include "curl_get_line.h"
-#include "strcase.h"
 #include "parsedate.h"
 #include "sendf.h"
 #include "curlx/warnless.h"
@@ -190,7 +189,7 @@ static CURLcode altsvc_add(struct altsvcinfo *asi, const char *line)
     char dbuf[MAX_ALTSVC_DATELEN + 1];
     time_t expires;
 
-    /* The date parser works on a null terminated string. The maximum length
+    /* The date parser works on a null-terminated string. The maximum length
        is upheld by curlx_str_quotedword(). */
     memcpy(dbuf, curlx_str(&date), curlx_strlen(&date));
     dbuf[curlx_strlen(&date)] = 0;
@@ -416,7 +415,7 @@ static bool hostcompare(const char *host, const char *check)
   if(hlen != clen)
     /* they cannot match if they have different lengths */
     return FALSE;
-  return strncasecompare(host, check, hlen);
+  return curl_strnequal(host, check, hlen);
 }
 
 /* altsvc_flush() removes all alternatives for this source origin from the
